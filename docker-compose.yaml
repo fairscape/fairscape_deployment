@@ -1,0 +1,75 @@
+# Docker Compose Spec for Local Testing of Fairscape
+services:
+  setup:
+    build: "./deploy/setup/"
+    env_file: "./deploy/setup/setup.env"
+    depends_on:
+      - ldap
+      - minio
+      - fairscape-api
+  fairscape-worker:
+    image: ghcr.io/fairscape/mds_python:RELEASE.2025-05-21.v1
+    env_file: "./config/fairscape.env"
+    command:
+      - "python"
+      - "fairscape_mds/worker.py"
+    depends_on:
+      - ldap
+      - mongo
+      - minio
+  fairscape-api:
+    image: ghcr.io/fairscape/mds_python:RELEASE.2025-05-21.v1
+    env_file: "./config/fairscape.env"
+    ports:
+      - 8080:8080
+    depends_on:
+      - ldap
+      - mongo
+      - minio
+  fairscape-frontend:
+    image: ghcr.io/fairscape/fairscapefrontendlocal:RELEASE.2025-02-12
+    ports:
+      - "5173:5173"
+    depends_on:
+      - fairscape-api
+      - ldap
+      - mongo
+      - minio
+
+  redis:
+    image: redis:7.2.4
+    ports:
+      - 6379:6379
+  mongo:
+    image: mongo:8.0.0-rc20-noble
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongotestaccess
+      MONGO_INITDB_ROOT_PASSWORD: mongotestsecret
+      MONGO_INITDB_DATABASE: admin
+    ports:
+      - 27017:27017
+    command: ["mongod", "--auth"]
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: meadmin
+      ME_CONFIG_BASICAUTH_PASSWORD: meadmin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: mongotestaccess
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mongotestsecret
+      ME_CONFIG_MONGODB_URL: mongodb://mongotestaccess:mongotestsecret@mongo:27017/
+    links:
+      - mongo:mongo
+  minio:
+    image: minio/minio:latest
+    restart: always
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: miniotestadmin
+      MINIO_ROOT_PASSWORD: miniotestsecret
+    command: server /data --console-address ":9001"
