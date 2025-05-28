@@ -7,7 +7,7 @@ set -e
 AZURE_REGION="eastus"
 RESOURCE_GROUP_NAME="fairscape-demo-rg-$(openssl rand -hex 3)"
 VM_NAME="fairscape-vm-$(openssl rand -hex 3)"
-VM_IMAGE="UbuntuLTS"
+VM_IMAGE="Ubuntu2204"
 VM_SIZE="Standard_B2s" # 2 vCPUs, 4 GiB RAM
 ADMIN_USERNAME="fairscape"
 
